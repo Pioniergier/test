@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Czyszczenie Discordów</title>
+<style>
+:root{--bg:#e8ecef;--panel:#fff;--ink:#16222d;--mute:#6a7885;--line:#d3dae0;--acc:#0e6b66;--acc2:#0a504c;--warn:#b4412b;--sel:#22a35a}
+@media (prefers-color-scheme:dark){:root{--bg:#10171d;--panel:#18222b;--ink:#e6edf2;--mute:#8a9aa8;--line:#2a3743;--acc:#2fb5ad;--acc2:#5ad0c8;--warn:#ef7a62}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+header{display:flex;gap:.75rem;align-items:center;padding:.9rem 1.25rem;background:var(--panel);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+header h1{font-size:1.1rem;margin:0 auto 0 0;font-weight:650}
+button,a.btn{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:.45rem .9rem;border-radius:6px;text-decoration:none}
+button:hover,a.btn:hover{border-color:var(--acc)}
+button.primary{background:var(--acc);border-color:var(--acc);color:#fff}
+button.danger{color:var(--warn)}
+button.danger:not(:disabled):hover{border-color:var(--warn)}
+button:disabled{opacity:.5;cursor:default}
+[hidden]{display:none!important}
+button:focus-visible,input:focus-visible,.acc:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+main{display:grid;grid-template-columns:minmax(260px,340px) minmax(0,1fr);gap:1rem;padding:1rem 1.25rem;max-width:1200px;margin:0 auto;align-items:start}
+@media(max-width:760px){main{grid-template-columns:minmax(0,1fr)}}
+main>*{min-width:0}
+section{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:1rem;min-width:0}
+section h2{font-size:1rem;margin:0 0 .5rem}
+.hint{font-size:.82rem;color:var(--mute);margin-bottom:.6rem}
+.list{display:grid;grid-template-columns:minmax(0,1fr);gap:.4rem}
+.item{display:flex;align-items:center;gap:.6rem;padding:.55rem .65rem;border:1px solid var(--line);border-radius:6px;min-width:0}
+.item .main{flex:1;min-width:0}
+.item .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item .s{font-size:.8rem;color:var(--mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.acc{cursor:pointer}
+.acc:hover{border-color:var(--acc)}
+.acc.active{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc) inset}
+.acc.off{opacity:.55;cursor:default}
+.acc.off:hover{border-color:var(--line)}
+label.item{margin:0;color:var(--ink);font-size:inherit;cursor:pointer}
+label.item.off{opacity:.55;cursor:default}
+label.item:not(.off):hover{border-color:var(--acc)}
+.pic{width:32px;height:32px;border-radius:8px;flex:none;object-fit:cover;background:var(--bg)}
+.ph{width:32px;height:32px;border-radius:8px;flex:none;display:grid;place-items:center;background:var(--bg);color:var(--mute);font-weight:650}
+.who{display:flex;align-items:center;gap:.7rem;margin-bottom:.8rem}
+.who .pic,.who .ph{width:44px;height:44px;border-radius:50%}
+.toolbar{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;padding:.55rem 0;margin-bottom:.5rem;border-bottom:1px solid var(--line)}
+.toolbar .spacer{flex:1}
+.toolbar label{display:flex;gap:.4rem;align-items:center;margin:0;font-size:.9rem;color:var(--ink);cursor:pointer;user-select:none}
+.badge{font-size:.75rem;padding:.1rem .45rem;border-radius:99px;background:var(--bg);color:var(--mute);white-space:nowrap}
+.badge.sel{background:rgba(34,163,90,.15);color:var(--sel)}
+.empty{color:var(--mute);padding:.6rem 0}
+.err{color:var(--warn)}
+.box{padding:.6rem .75rem;border:1px solid var(--line);border-radius:6px;margin-bottom:.6rem;font-size:.9rem;background:var(--bg)}
+.bar{height:6px;border-radius:99px;background:var(--line);overflow:hidden;margin:.4rem 0}
+.bar>i{display:block;height:100%;width:0;background:var(--acc);transition:width .3s}
+.fail{font-size:.82rem;color:var(--warn);margin-top:.3rem}
+</style></head>
+<body>
+<header>
+  <a class="btn" href="/">← Panel</a>
+  <h1>Czyszczenie Discordów</h1>
+</header>
+
+<main>
+  <section>
+    <h2>Konta</h2>
+    <div class="hint">Kliknij konto, żeby zobaczyć jego serwery.</div>
+    <div class="list" id="accounts"></div>
+  </section>
+
+  <section>
+    <div class="empty" id="placeholder">Wybierz konto z listy.</div>
+    <div id="detail" hidden>
+      <div class="who">
+        <div id="avatarBox"></div>
+        <div style="min-width:0">
+          <strong id="whoName"></strong>
+          <div class="hint" id="whoSub" style="margin:0"></div>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <label><input type="checkbox" id="chkAll"> Zaznacz wszystkie</label>
+        <span class="badge" id="selCount">0 zaznaczonych</span>
+        <span class="spacer"></span>
+        <button id="btnRefresh">Odśwież</button>
+        <button id="btnLeave" class="danger" disabled>Opuść serwery</button>
+      </div>
+
+      <div class="box" id="progress" hidden>
+        <div id="progText"></div>
+        <div class="bar"><i id="progBar"></i></div>
+        <button id="btnCancel">Przerwij</button>
+      </div>
+      <div class="box" id="report" hidden></div>
+      <div class="box err" id="msg" hidden></div>
+
+      <div class="list" id="guilds"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const api=(m,u,b)=>fetch(u,{method:m,headers:{'Content-Type':'application/json'},body:b?JSON.stringify(b):undefined}).then(r=>r.json());
+
+let ACC=[], cur=null, poll=null;
+// G[idKonta] = { me, guilds, selected:Set, names:{}, loading, error, job, report }
+const G={};
+// sortowanie jak w panelu: bez „@” alfabetycznie; z „@” najpierw wg domeny, potem wg nazwy przed „@”
+const accKey=n=>{const s=String(n||'').trim().toLowerCase(),i=s.lastIndexOf('@');return i>0?[s.slice(i+1),s.slice(0,i)]:['',s]};
+const cmp=(a,b)=>a.localeCompare(b,'pl',{numeric:true,sensitivity:'base'});
+const byName=(a,b)=>{const x=accKey(a.name),y=accKey(b.name);return cmp(x[0],y[0])||cmp(x[1],y[1])};
+const usable=a=>a.has_token && a.token_mode==='discord';
+const letter=n=>esc((String(n||'?').trim().charAt(0)||'?').toUpperCase());
+const pic=(url,name)=>url?`<img class="pic" src="${esc(url)}" alt="" loading="lazy" referrerpolicy="no-referrer">`:`<span class="ph">${letter(name)}</span>`;
+
+async function init(){
+  try{ ACC=((await fetch('/api/state').then(r=>r.json())).accounts||[]).sort(byName); }catch{ ACC=[]; }
+  renderAccounts();
+}
+
+function renderAccounts(){
+  $('accounts').innerHTML=ACC.length?ACC.map(a=>{
+    const ok=usable(a), g=G[a.id];
+    const sub=!a.has_token?'brak tokenu':!ok?'token nie jest w trybie „Discord”':g&&g.guilds?`${g.guilds.length} serwerów`:'kliknij, aby wczytać';
+    return `<div class="item acc${a.id===cur?' active':''}${ok?'':' off'}" data-acc="${esc(a.id)}"${ok?' tabindex="0" role="button"':''}>
+      <div class="main"><div class="t">${esc(a.name)}</div><div class="s">${esc(sub)}</div></div></div>`;
+  }).join(''):'<div class="empty">Brak kont. Dodaj je w panelu.</div>';
+}
+
+function pickAccount(el){
+  const id=el&&el.dataset.acc, a=ACC.find(x=>x.id===id);
+  if(!a||!usable(a)) return;
+  select(id);
+}
+$('accounts').addEventListener('click',e=>pickAccount(e.target.closest('[data-acc]')));
+$('accounts').addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); pickAccount(e.target.closest('[data-acc]')); } });
+
+async function select(id){
+  cur=id;
+  const g=G[id]=G[id]||{selected:new Set(),names:{},guilds:null};
+  $('placeholder').hidden=true; $('detail').hidden=false;
+  renderAccounts(); renderDetail();
+  if(!g.guilds) await load(id);
+  await checkJob(id);          // jeśli opuszczanie trwa (np. po odświeżeniu strony) – podłącz się do niego
+}
+
+async function load(id){
+  const g=G[id];
+  g.loading=true; g.error=null; renderDetail();
+  let r;
+  try{ r=await api('GET',`/api/discord/${id}/guilds`); }catch(e){ r={ok:false,error:'Brak połączenia z panelem'}; }
+  g.loading=false;
+  if(r.ok){
+    g.me=r.me; g.guilds=r.guilds;
+    r.guilds.forEach(x=>g.names[x.id]=x.name);
+    const ids=new Set(r.guilds.filter(x=>!x.owner).map(x=>x.id));
+    g.selected=new Set([...g.selected].filter(x=>ids.has(x)));   // zaznaczenie przeżywa odświeżenie
+  }else g.error=r.error||'Nie udało się wczytać serwerów';
+  renderAccounts(); renderDetail();
+}
+
+function busy(){ const g=G[cur]; return !!(g&&(g.loading||g.job&&g.job.running)); }
+
+function renderDetail(){
+  const g=G[cur]; if(!g) return;
+  const a=ACC.find(x=>x.id===cur);
+  $('whoName').textContent=g.me?g.me.name:(a?a.name:'');
+  $('whoSub').textContent=g.me?`@${g.me.username} · konto w panelu: ${a?a.name:''}`:'';
+  $('avatarBox').innerHTML=pic(g.me&&g.me.avatar,g.me?g.me.name:a&&a.name);
+
+  const msg=$('msg');
+  if(g.loading){ msg.hidden=false; msg.className='box'; msg.textContent='Wczytuję serwery…'; }
+  else if(g.error){ msg.hidden=false; msg.className='box err'; msg.textContent=g.error; }
+  else msg.hidden=true;
+
+  const rep=$('report'); rep.hidden=!g.report; if(g.report) rep.innerHTML=g.report;
+
+  const list=g.guilds||[];
+  $('guilds').innerHTML=list.length?list.map(x=>`
+    <label class="item${x.owner?' off':''}">
+      <input type="checkbox" data-g="${esc(x.id)}"${g.selected.has(x.id)?' checked':''}${x.owner||busy()?' disabled':''}>
+      ${pic(x.icon,x.name)}
+      <div class="main"><div class="t">${esc(x.name)}</div>
+      <div class="s">${x.owner?'jesteś właścicielem – nie da się opuścić':esc(x.id)}</div></div>
+    </label>`).join(''):(g.loading||g.error?'':'<div class="empty">To konto nie jest na żadnym serwerze.</div>');
+  updateToolbar();
+}
+
+function updateToolbar(){
+  const g=G[cur]; if(!g) return;
+  const sel=(g.guilds||[]).filter(x=>!x.owner), n=g.selected.size, b=busy();
+  const all=$('chkAll');
+  all.disabled=b||!sel.length;
+  all.checked=n>0&&n===sel.length;
+  all.indeterminate=n>0&&n<sel.length;
+  const c=$('selCount'); c.textContent=`${n} zaznaczonych`; c.className='badge'+(n?' sel':'');
+  $('btnLeave').textContent=`Opuść serwery${n?` (${n})`:''}`;
+  $('btnLeave').disabled=b||n===0;
+  $('btnRefresh').disabled=b;
+  $('guilds').querySelectorAll('input[data-g]').forEach(i=>{ if(!i.closest('.off')) i.disabled=b; });
+}
+
+$('guilds').addEventListener('change',e=>{
+  const i=e.target.closest('input[data-g]'), g=G[cur]; if(!i||!g) return;
+  i.checked?g.selected.add(i.dataset.g):g.selected.delete(i.dataset.g);
+  updateToolbar();
+});
+$('chkAll').addEventListener('change',e=>{
+  const g=G[cur]; if(!g) return;
+  g.selected=e.target.checked?new Set((g.guilds||[]).filter(x=>!x.owner).map(x=>x.id)):new Set();
+  renderDetail();
+});
+$('btnRefresh').addEventListener('click',()=>{ const g=G[cur]; if(g){ g.report=null; load(cur); } });
+
+$('btnLeave').addEventListener('click',async()=>{
+  const g=G[cur], a=ACC.find(x=>x.id===cur); if(!g||!g.selected.size) return;
+  const n=g.selected.size;
+  if(!confirm(`Opuścić ${n} ${n===1?'serwer':'serwerów'} na koncie „${a?a.name:''}”?\n\nTej operacji nie da się cofnąć.`)) return;
+  g.report=null;
+  const r=await api('POST',`/api/discord/${cur}/leave`,{ids:[...g.selected]});
+  if(!r.ok){ g.error=r.error||'Nie udało się rozpocząć'; renderDetail(); return; }
+  g.error=null;
+  await checkJob(cur);
+});
+$('btnCancel').addEventListener('click',()=>{ if(cur) api('POST',`/api/discord/${cur}/leave-cancel`); });
+
+// ---- postęp opuszczania ----
+async function checkJob(id){
+  const g=G[id]; if(!g) return;
+  let j; try{ j=await api('GET',`/api/discord/${id}/leave-status`); }catch{ return; }
+  if(j.running){
+    g.job=j; if(id===cur){ showProgress(j); renderDetail(); }
+    clearTimeout(poll); poll=setTimeout(()=>checkJob(id),1000);
+    return;
+  }
+  const wasRunning=g.job&&g.job.running;
+  g.job=null;
+  if(id===cur){ $('progress').hidden=true; }
+  if(wasRunning) await finishJob(id,j);
+  else if(id===cur) renderDetail();
+}
+function showProgress(j){
+  $('progress').hidden=false;
+  $('progText').textContent=`Opuszczam serwery… ${j.done} / ${j.total}`;
+  $('progBar').style.width=(j.total?Math.round(j.done/j.total*100):0)+'%';
+}
+async function finishJob(id,j){
+  const g=G[id];
+  const ok=j.results.filter(r=>r.ok), bad=j.results.filter(r=>!r.ok);
+  ok.forEach(r=>g.selected.delete(r.id));
+  g.report=`Opuszczono <strong>${ok.length}</strong> z ${j.total} serwerów${j.cancelled?' (przerwano)':''}.`
+    +bad.map(r=>`<div class="fail">${esc(g.names[r.id]||r.id)}: ${esc(r.error)}</div>`).join('');
+  await load(id);
+}
+
+init();
+</script>
+</body></html>

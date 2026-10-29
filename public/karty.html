@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Karty przeglądarki</title>
+<style>
+:root{--bg:#e8ecef;--panel:#fff;--ink:#16222d;--mute:#6a7885;--line:#d3dae0;--acc:#0e6b66;--acc2:#0a504c;--warn:#b4412b;--ok:#22a35a}
+@media (prefers-color-scheme:dark){:root{--bg:#10171d;--panel:#18222b;--ink:#e6edf2;--mute:#8a9aa8;--line:#2a3743;--acc:#2fb5ad;--acc2:#5ad0c8;--warn:#ef7a62}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+header{display:flex;gap:.75rem;align-items:center;padding:.9rem 1.25rem;background:var(--panel);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+header h1{font-size:1.1rem;margin:0 auto 0 0;font-weight:650}
+button,a.btn{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:.4rem .8rem;border-radius:6px;text-decoration:none;white-space:nowrap}
+button:hover,a.btn:hover{border-color:var(--acc)}
+button.primary{background:var(--acc);border-color:var(--acc);color:#fff}
+button.danger{color:var(--warn)}
+button:disabled{opacity:.5;cursor:default}
+[hidden]{display:none!important}
+input[type=text],select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:.4rem .6rem;min-width:0}
+button:focus-visible,input:focus-visible,select:focus-visible,.tab:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+main{display:grid;grid-template-columns:minmax(240px,320px) minmax(0,1fr);gap:1rem;padding:1rem 1.25rem;max-width:1500px;margin:0 auto;align-items:start}
+main>*{min-width:0}
+@media(max-width:860px){main{grid-template-columns:minmax(0,1fr)}}
+section{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:1rem;min-width:0}
+section h2{font-size:1rem;margin:0 0 .4rem}
+.hint{font-size:.82rem;color:var(--mute);margin-bottom:.6rem}
+.list{display:grid;grid-template-columns:minmax(0,1fr);gap:.4rem;margin-bottom:.6rem}
+.tab{padding:.55rem .65rem;border:1px solid var(--line);border-radius:6px;cursor:pointer;min-width:0}
+.tab:hover{border-color:var(--acc)}
+.tab.active{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc) inset}
+.tab.wait{border-color:var(--warn)}
+.tab .a{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tab .t,.tab .u{font-size:.82rem;color:var(--mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tab .w{font-size:.8rem;color:var(--warn);margin-top:.15rem}
+.pill{font-size:.78rem;padding:.12rem .55rem;border-radius:99px;background:var(--bg);color:var(--mute)}
+.row{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin-bottom:.55rem}
+.row .grow{flex:1;min-width:140px}
+.box{padding:.6rem .75rem;border:1px solid var(--line);border-radius:6px;margin-bottom:.6rem;font-size:.9rem;background:var(--bg)}
+.box.warn{border-color:var(--warn)}
+.frame{position:relative;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:#000;line-height:0;outline:none}
+.frame:focus{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc)}
+.frame img{display:block;width:100%;height:auto;cursor:crosshair;user-select:none;-webkit-user-drag:none}
+.dot{position:absolute;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;border:2px solid #ff3b30;background:rgba(255,59,48,.25);pointer-events:none;animation:pop .7s ease-out forwards}
+@keyframes pop{from{transform:scale(.5);opacity:1}to{transform:scale(1.6);opacity:0}}
+.note{font-size:.8rem;color:var(--mute);margin:.4rem 0 .6rem;min-height:1.2em}
+.note.err{color:var(--warn)}
+.empty{color:var(--mute);padding:.4rem 0}
+label.inl{display:flex;gap:.35rem;align-items:center;font-size:.88rem;cursor:pointer}
+</style></head>
+<body>
+<header>
+  <a class="btn" href="/">← Panel</a>
+  <h1>Karty przeglądarki</h1>
+  <span class="pill" id="runState">…</span>
+</header>
+
+<main>
+  <section>
+    <h2>Otwarte karty</h2>
+    <div class="hint">Karty otwiera bot (każde konto ma własne okno). Gdy bot nie działa, lista jest pusta.</div>
+    <div class="list" id="tabs"></div>
+    <button id="btnTabs">Odśwież listę</button>
+  </section>
+
+  <section>
+    <div class="empty" id="placeholder">Wybierz kartę z listy.</div>
+
+    <div id="viewer" hidden>
+      <div class="box warn" id="resumeBox" hidden>
+        ⏸ Bot czeka na Ciebie: <strong id="resumeText"></strong>
+        <div style="margin-top:.5rem"><button class="primary" id="btnResume">▶ Wznów pracę</button></div>
+      </div>
+
+      <div class="row">
+        <button id="btnBack" title="Wstecz">◀</button>
+        <button id="btnFwd" title="Dalej">▶</button>
+        <button id="btnReload" title="Przeładuj kartę">↻</button>
+        <input type="text" id="url" class="grow" placeholder="Adres strony" spellcheck="false" autocomplete="off">
+        <button id="btnGo">Idź</button>
+        <button id="btnClose" class="danger" title="Zamknij tę kartę">✕ Zamknij kartę</button>
+      </div>
+
+      <div class="frame" id="frame" tabindex="0" aria-label="Podgląd karty – kliknij, żeby kliknąć w karcie; pisz, gdy ramka jest aktywna">
+        <img id="screen" alt="Podgląd karty" draggable="false">
+      </div>
+      <div class="note" id="note"></div>
+
+      <div class="row">
+        <input type="text" id="txt" class="grow" placeholder="Tekst do wpisania w aktywne pole (np. kod, login)" autocomplete="off">
+        <button id="btnSend">Wpisz</button>
+        <button id="btnSendEnter">Wpisz + Enter</button>
+      </div>
+      <div class="row">
+        <button data-key="Enter">Enter</button>
+        <button data-key="Tab">Tab</button>
+        <button data-key="Backspace">⌫</button>
+        <button data-key="Escape">Esc</button>
+        <button data-scroll="-400" title="Przewiń w górę">▲</button>
+        <button data-scroll="400" title="Przewiń w dół">▼</button>
+        <span class="grow"></span>
+        <label class="inl"><input type="checkbox" id="live" checked> Na żywo</label>
+        <select id="every" aria-label="Częstotliwość odświeżania">
+          <option value="500">0,5 s</option><option value="1000" selected>1 s</option>
+          <option value="2000">2 s</option><option value="5000">5 s</option>
+        </select>
+        <button id="btnShot">Odśwież obraz</button>
+      </div>
+      <div class="hint">Kliknij w obraz, żeby kliknąć w tym miejscu karty. Gdy ramka jest aktywna (obrys), możesz pisać z klawiatury, wklejać tekst (Ctrl+V) i przewijać kółkiem myszy.</div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const api=(m,u,b)=>fetch(u,{method:m,headers:{'Content-Type':'application/json'},body:b?JSON.stringify(b):undefined,cache:'no-store'}).then(r=>r.json());
+const Q=new URLSearchParams(location.search);
+
+let TABS=[], cur=null, vp=null, busy=false, timer=null, lastUrl=null;
+const img=$('screen'), frame=$('frame');
+
+function setNote(msg,err){ const n=$('note'); n.textContent=msg||''; n.className='note'+(err?' err':''); }
+const curTab=()=>TABS.find(t=>t.id===cur);
+
+/* ---------- lista kart ---------- */
+async function loadTabs(){
+  let r; try{ r=await api('GET','/api/tabs'); }catch{ $('runState').textContent='brak połączenia z panelem'; return; }
+  if(!r||!r.ok) return;
+  TABS=r.tabs;
+  $('runState').textContent=r.running?'bot działa':'bot bezczynny';
+  if(cur&&!TABS.some(t=>t.id===cur)){ cur=null; setNote(''); }
+  if(!cur){                                    // ?acc=<id> albo karta konta, które czeka na człowieka
+    const want=Q.get('acc');
+    const pick=TABS.find(t=>t.waiting&&(!want||t.accId===want))||(want&&TABS.find(t=>t.accId===want))||null;
+    if(pick){ await select(pick.id); return; }
+  }
+  renderTabs(); renderViewer();
+}
+function renderTabs(){
+  $('tabs').innerHTML=TABS.length?TABS.map(t=>{
+    let host=t.url; try{ const u=new URL(t.url); host=u.host+u.pathname; }catch{}
+    return `<div class="tab${t.id===cur?' active':''}${t.waiting?' wait':''}" data-tab="${t.id}" tabindex="0" role="button">
+      <div class="a">${esc(t.account||'(karta)')}</div>
+      <div class="t">${esc(t.title||'bez tytułu')}</div>
+      <div class="u">${esc(host)}</div>
+      ${t.waiting?`<div class="w">⏸ czeka na Ciebie: ${esc(t.waiting)}</div>`:''}</div>`;
+  }).join(''):'<div class="empty">Brak otwartych kart.</div>';
+}
+function renderViewer(){
+  const t=curTab();
+  $('placeholder').hidden=!!t; $('viewer').hidden=!t;
+  if(!t) return;
+  if(document.activeElement!==$('url')) $('url').value=t.url;
+  $('resumeBox').hidden=!t.waiting;
+  if(t.waiting) $('resumeText').textContent=t.waiting;
+}
+function pickTab(el){ const t=el&&el.closest('[data-tab]'); if(t) select(Number(t.dataset.tab)); }
+$('tabs').addEventListener('click',e=>pickTab(e.target));
+$('tabs').addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); pickTab(e.target); } });
+$('btnTabs').addEventListener('click',loadTabs);
+
+async function select(id){
+  cur=id; vp=null; setNote('Wczytuję podgląd…');
+  renderTabs(); renderViewer();
+  await api('POST',`/api/tabs/${id}/front`).catch(()=>{});   // karta w tle nie renderuje – wyciągamy ją na wierzch
+  await frame_();
+}
+
+/* ---------- podgląd na żywo ---------- */
+async function frame_(){
+  if(!cur||busy) return;
+  busy=true;
+  try{
+    const r=await fetch(`/api/tabs/${cur}/screen.jpg?t=${Date.now()}`,{cache:'no-store'});
+    if(!r.ok){
+      const j=await r.json().catch(()=>({}));
+      setNote(j.error||('Błąd '+r.status),true);
+      if(r.status===404){ cur=null; await loadTabs(); }
+      return;
+    }
+    const h=r.headers.get('X-Viewport');
+    vp=h?h.split('x').map(Number):null;
+    const url=URL.createObjectURL(await r.blob());
+    const prev=lastUrl; lastUrl=url;
+    img.onload=()=>{ if(prev) URL.revokeObjectURL(prev); };
+    img.src=url;
+    setNote('Odświeżono '+new Date().toTimeString().slice(0,8)+(vp?` · okno strony ${vp[0]}×${vp[1]}`:''));
+  }catch{ setNote('Brak połączenia z panelem',true); }
+  finally{ busy=false; }
+}
+function loop(){
+  clearTimeout(timer);
+  timer=setTimeout(async()=>{
+    if($('live').checked&&!document.hidden) await frame_();
+    loop();
+  },Number($('every').value)||1000);
+}
+$('every').addEventListener('change',loop);
+$('btnShot').addEventListener('click',frame_);
+
+/* ---------- akcje na karcie ---------- */
+async function act(kind,body,refresh=true){
+  if(!cur) return {ok:false};
+  let r; try{ r=await api('POST',`/api/tabs/${cur}/${kind}`,body||{}); }catch{ r={ok:false,error:'Brak połączenia z panelem'}; }
+  if(!r.ok) setNote(r.error||'Błąd',true);
+  if(refresh) setTimeout(frame_,250);
+  return r;
+}
+function mapPoint(e){
+  const r=img.getBoundingClientRect();
+  const W=vp?vp[0]:img.naturalWidth, H=vp?vp[1]:img.naturalHeight;
+  return { x:(e.clientX-r.left)/(r.width||1)*W, y:(e.clientY-r.top)/(r.height||1)*H, px:e.clientX-r.left, py:e.clientY-r.top };
+}
+img.addEventListener('click',e=>{
+  frame.focus();
+  const p=mapPoint(e);
+  const d=document.createElement('div'); d.className='dot'; d.style.left=p.px+'px'; d.style.top=p.py+'px';
+  frame.appendChild(d); setTimeout(()=>d.remove(),800);
+  act('click',{x:p.x,y:p.y});
+});
+let wheel={dx:0,dy:0,x:0,y:0,t:null};
+img.addEventListener('wheel',e=>{
+  e.preventDefault();
+  const k=e.deltaMode===1?40:1, p=mapPoint(e);
+  wheel.dx+=e.deltaX*k; wheel.dy+=e.deltaY*k; wheel.x=p.x; wheel.y=p.y;
+  clearTimeout(wheel.t);
+  wheel.t=setTimeout(()=>{ const w={...wheel}; wheel.dx=wheel.dy=0; act('scroll',{x:w.x,y:w.y,dx:w.dx,dy:w.dy}); },80);
+},{passive:false});
+
+// klawiatura: znaki drukowane zbieramy na 150 ms i wysyłamy razem, klawisze specjalne od razu
+let typeBuf='', typeT=null;
+function flushType(){ if(!typeBuf) return; const t=typeBuf; typeBuf=''; act('type',{text:t}); }
+const SPECIAL=['Enter','Tab','Backspace','Delete','Escape','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Home','End','PageUp','PageDown'];
+frame.addEventListener('keydown',e=>{
+  if(e.isComposing) return;
+  if((e.ctrlKey||e.metaKey)&&e.key.length===1){
+    if(e.key.toLowerCase()==='v') return;                    // wklejanie obsługuje zdarzenie paste
+    e.preventDefault(); flushType(); act('key',{key:'Control+'+e.key.toLowerCase()}); return;
+  }
+  if(SPECIAL.includes(e.key)){ e.preventDefault(); flushType(); act('key',{key:e.key}); return; }
+  if(e.key.length===1&&!e.altKey){ e.preventDefault(); typeBuf+=e.key; clearTimeout(typeT); typeT=setTimeout(flushType,150); }
+});
+frame.addEventListener('paste',e=>{
+  const t=(e.clipboardData||window.clipboardData).getData('text');
+  if(t){ e.preventDefault(); act('type',{text:t}); }
+});
+
+$('btnSend').addEventListener('click',()=>{ const v=$('txt').value; if(v){ act('type',{text:v}); $('txt').value=''; } });
+$('btnSendEnter').addEventListener('click',async()=>{
+  const v=$('txt').value;
+  if(v){ await act('type',{text:v},false); $('txt').value=''; }
+  act('key',{key:'Enter'});
+});
+$('txt').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); $('btnSendEnter').click(); } });
+document.querySelectorAll('[data-key]').forEach(b=>b.addEventListener('click',()=>act('key',{key:b.dataset.key})));
+document.querySelectorAll('[data-scroll]').forEach(b=>b.addEventListener('click',()=>{
+  const W=vp?vp[0]:img.naturalWidth, H=vp?vp[1]:img.naturalHeight;
+  act('scroll',{x:W/2,y:H/2,dx:0,dy:Number(b.dataset.scroll)});
+}));
+
+$('btnBack').addEventListener('click',()=>act('nav',{action:'back'}));
+$('btnFwd').addEventListener('click',()=>act('nav',{action:'forward'}));
+$('btnReload').addEventListener('click',()=>act('nav',{action:'reload'}));
+const go=()=>{ const u=$('url').value.trim(); if(u) act('goto',{url:u}); };
+$('btnGo').addEventListener('click',go);
+$('url').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); go(); } });
+$('btnClose').addEventListener('click',async()=>{
+  const t=curTab(); if(!t) return;
+  if(!confirm(`Zamknąć tę kartę (${t.account||'karta'})?\n\nJeśli bot właśnie jej używa, jego bieżąca operacja zakończy się błędem.`)) return;
+  const r=await act('close',{},false);
+  if(r.ok){ cur=null; setNote(''); await loadTabs(); }
+});
+$('btnResume').addEventListener('click',async()=>{
+  const t=curTab(); if(!t||!t.accId) return;
+  await api('POST',`/api/accounts/${encodeURIComponent(t.accId)}/resume`).catch(()=>{});
+  setTimeout(loadTabs,400);
+});
+
+loadTabs(); loop(); setInterval(loadTabs,3000);
+</script>
+</body></html>

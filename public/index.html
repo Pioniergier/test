@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Panel bota</title>
+<style>
+:root{--bg:#e8ecef;--panel:#fff;--ink:#16222d;--mute:#6a7885;--line:#d3dae0;--acc:#0e6b66;--acc2:#0a504c;--warn:#b4412b;--sel:#22a35a}
+@media (prefers-color-scheme:dark){:root{--bg:#10171d;--panel:#18222b;--ink:#e6edf2;--mute:#8a9aa8;--line:#2a3743;--acc:#2fb5ad;--acc2:#5ad0c8;--warn:#ef7a62}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+header{display:flex;gap:.75rem;align-items:center;padding:.9rem 1.25rem;background:var(--panel);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+header h1{font-size:1.1rem;margin:0 auto 0 0;font-weight:650}
+.dot{width:.65rem;height:.65rem;border-radius:50%;background:var(--mute);display:inline-block;margin-right:.4rem}
+.dot.on{background:var(--sel);box-shadow:0 0 0 4px rgba(34,163,90,.25)}
+button{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:.45rem .9rem;border-radius:6px}
+button:hover{border-color:var(--acc)}
+button.primary{background:var(--acc);border-color:var(--acc);color:#fff}
+button.primary:hover{background:var(--acc2)}
+button.danger{color:var(--warn)}
+button:disabled{opacity:.5;cursor:default}
+a.btn{font:inherit;text-decoration:none;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:.45rem .9rem;border-radius:6px}
+a.btn:hover{border-color:var(--acc)}
+[hidden]{display:none!important}
+label.view{display:flex;gap:.4rem;align-items:center;margin:0;font-size:.9rem;color:var(--ink);cursor:pointer;user-select:none}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+main{display:grid;grid-template-columns:minmax(300px,390px) minmax(0,1fr);gap:1rem;padding:1rem 1.25rem;max-width:1400px;margin:0 auto}
+main>*{min-width:0}
+@media(max-width:860px){main{grid-template-columns:minmax(0,1fr)}}
+section{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:1rem;min-width:0}
+section h2{font-size:1rem;margin:0 0 .75rem}
+input[type=text],input[type=password],select{width:100%;padding:.45rem .6rem;border:1px solid var(--line);border-radius:6px;background:transparent;color:var(--ink);font:inherit}
+select option{color:#000}
+label{display:block;font-size:.85rem;color:var(--mute);margin:.5rem 0 .15rem}
+details{margin-top:.5rem}summary{cursor:pointer;color:var(--mute);font-size:.85rem}
+.row{display:flex;gap:.5rem;align-items:center}
+.check{display:flex;gap:.4rem;align-items:center;font-size:.85rem;color:var(--mute);margin-top:.4rem}
+.list{margin-top:.75rem;display:grid;grid-template-columns:minmax(0,1fr);gap:.4rem}
+.item{display:flex;align-items:center;gap:.6rem;padding:.55rem .65rem;border:1px solid var(--line);border-radius:6px;min-width:0}
+.item>button,.item>.badge,.item>input{flex:none}
+.item .main{flex:1;min-width:0}
+.item .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item .s{font-size:.8rem;color:var(--mute)}
+.item .s.err,.err{color:var(--warn)}
+.icon{padding:.35rem .5rem;line-height:0}
+.icon svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.badge{font-size:.75rem;padding:.1rem .45rem;border-radius:99px;background:var(--bg);color:var(--mute);white-space:nowrap}
+.badge.sel{background:rgba(34,163,90,.15);color:var(--sel)}
+pre#log{margin:0;height:200px;max-width:100%;overflow:auto;overflow-wrap:anywhere;background:var(--bg);padding:.7rem;border-radius:6px;font:12.5px/1.5 ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap}
+.empty{color:var(--mute);padding:.6rem 0}
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;z-index:20;padding:2vh 2vw}
+#modal.open{display:block}
+.box{background:var(--panel);border-radius:10px;height:100%;display:grid;grid-template-columns:1fr 320px;grid-template-rows:auto 1fr;overflow:hidden}
+@media(max-width:860px){.box{grid-template-columns:1fr;grid-template-rows:auto 1fr 240px}}
+.box .bar{grid-column:1/-1;display:flex;gap:.6rem;align-items:center;padding:.6rem .9rem;border-bottom:1px solid var(--line)}
+.bar .u{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--mute)}
+.bar select{width:180px}
+.frame{position:relative;background:#fff}
+.frame iframe{width:100%;height:100%;border:0;background:#fff}
+.frame .load{position:absolute;inset:0;display:grid;place-items:center;background:var(--panel);color:var(--mute)}
+.side{border-left:1px solid var(--line);padding:.8rem;overflow:auto}
+.side h3{margin:.9rem 0 .5rem;font-size:.95rem}
+.side h3:first-child{margin-top:0}
+.sel-item{display:flex;gap:.4rem;align-items:flex-start;padding:.4rem;border:1px solid var(--line);border-radius:6px;margin-bottom:.35rem;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;word-break:break-all}
+.sel-item span{flex:1}
+.hint{font-size:.82rem;color:var(--mute);margin-bottom:.6rem}
+</style></head>
+<body>
+<header>
+  <h1>Panel bota</h1>
+  <span><i class="dot" id="dot"></i><span id="status">bezczynny</span></span>
+  <label class="view" title="Włączone: bot pracuje w widocznym oknie Chrome. Wyłączone: w tle. Zmiana działa od następnego Startu/Skanowania."><input type="checkbox" id="chkView"> Pokaż przeglądarkę</label>
+  <label class="view" title="Maks. liczba serwerów, do których bot dołączy na jedno konto w jednym Starcie. 0 = nie dołącza wcale."><input type="number" id="numJoins" min="0" max="100" style="width:3.5rem"> limit dołączeń</label>
+  <a class="btn" href="/karty.html" title="Podgląd na żywo i sterowanie kartami przeglądarki bota (np. rozwiązanie captchy)">Karty przeglądarki</a>
+  <a class="btn" href="/discord.html" title="Opuszczanie serwerów Discorda z wybranych kont">Czyszczenie Discordów</a>
+  <button id="btnScan">Skanuj</button>
+  <button id="btnStart" class="primary">Start</button>
+  <button id="btnStop" class="danger" hidden>Stop</button>
+</header>
+
+<main>
+  <section>
+    <h2>Konta</h2>
+    <form id="accForm" autocomplete="off">
+      <input type="hidden" id="a_id">
+      <label for="a_name">Nazwa konta</label><input type="text" id="a_name" required>
+
+      <label for="a_token">Token <span id="tokHint"></span></label>
+      <input type="password" id="a_token" placeholder="wklej token" autocomplete="off" spellcheck="false">
+      <div class="row">
+        <div style="flex:1"><label for="a_tmode">Jak wysłać token</label>
+          <select id="a_tmode">
+            <option value="bearer">Nagłówek Authorization: Bearer</option>
+            <option value="header">Nagłówek Authorization (sam token)</option>
+            <option value="cookie">Cookie</option>
+            <option value="localstorage">localStorage</option>
+            <option value="discord">Discord – localStorage na discord.com (karta startowa)</option>
+          </select></div>
+        <div style="flex:1"><label for="a_tname">Nazwa cookie / klucza</label>
+          <input type="text" id="a_tname" placeholder="np. token"></div>
+      </div>
+      <label class="check" id="clearRow" hidden><input type="checkbox" id="a_clear"> Usuń zapisany token</label>
+
+      <details><summary>Login i hasło (opcjonalnie, auto-logowanie)</summary>
+        <label for="a_login">Login</label><input type="text" id="a_login">
+        <label for="a_pass">Hasło <span id="passHint"></span></label><input type="password" id="a_pass">
+        <label for="a_lurl">Adres strony logowania</label><input type="text" id="a_lurl" placeholder="https://…/login">
+        <label for="a_usel">Selektor pola login (puste = #email)</label><input type="text" id="a_usel" placeholder="#email">
+        <label for="a_psel">Selektor pola hasło (puste = #password)</label><input type="text" id="a_psel" placeholder="#password">
+        <label for="a_ssel">Selektor przycisku (puste = button[type=submit])</label><input type="text" id="a_ssel" placeholder="button[type=submit]">
+      </details>
+      <div class="row" style="margin-top:.8rem">
+        <button class="primary" type="submit" id="accSubmit">Dodaj konto</button>
+        <button type="button" id="accCancel" hidden>Anuluj</button>
+      </div>
+    </form>
+    <div class="list" id="accounts"></div>
+  </section>
+
+  <div style="display:grid;grid-template-columns:minmax(0,1fr);gap:1rem;align-content:start;min-width:0">
+    <section>
+      <h2>Strony</h2>
+      <form class="row" id="pageForm">
+        <input type="text" id="p_url" placeholder="https://przyklad.pl/strona" required>
+        <button class="primary" type="submit">Dodaj</button>
+      </form>
+      <div class="list" id="pages"></div>
+    </section>
+    <section><h2>Dziennik</h2><pre id="log"></pre></section>
+  </div>
+</main>
+
+<div id="modal"><div class="box">
+  <div class="bar">
+    <strong>Podgląd bota</strong><span class="u" id="m_url"></span>
+    <select id="m_acc" aria-label="Wyświetl jako konto"></select>
+    <button id="m_save" class="primary">Zapisz</button>
+    <button id="m_close">Zamknij</button>
+  </div>
+  <div class="frame"><div class="load" id="m_load">Renderuję stronę…</div>
+    <iframe id="ifr" sandbox="allow-same-origin" title="Podgląd strony"></iframe></div>
+  <aside class="side">
+    <h3>Co robi bot na tej stronie</h3>
+    <label for="m_tid">ID elementu do wyszukania</label>
+    <input type="text" id="m_tid" placeholder="np. search-input">
+    <label for="m_action">Akcja</label>
+    <select id="m_action">
+      <option value="read">Odczytaj tekst elementów</option>
+      <option value="search">Wpisz frazę w element i wyszukaj (Enter)</option>
+    </select>
+    <div id="m_qrow" hidden><label for="m_query">Szukana fraza</label><input type="text" id="m_query"></div>
+
+    <h3>Zaznaczone elementy (<span id="m_count">0</span>)</h3>
+    <div class="hint">Kliknij element na stronie, aby go zaznaczyć. Kliknij ponownie, aby odznaczyć.</div>
+    <div id="m_list"></div>
+  </aside>
+</div></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const api=(m,u,b)=>fetch(u,{method:m,headers:{'Content-Type':'application/json'},body:b?JSON.stringify(b):undefined}).then(r=>r.json());
+/* sortowanie: bez „@” (antek, danuta) → alfabetycznie; z „@” → najpierw wg domeny, potem wg nazwy przed „@”
+   (kebaby@gg.com i danuta@gg.com razem, przed antek@gmail.com i baba@gmail.com) */
+const accKey=n=>{const s=String(n||'').trim().toLowerCase(),i=s.lastIndexOf('@');return i>0?[s.slice(i+1),s.slice(0,i)]:['',s]};
+const cmp=(a,b)=>a.localeCompare(b,'pl',{numeric:true,sensitivity:'base'});
+const byName=(a,b)=>{const x=accKey(a.name),y=accKey(b.name);return cmp(x[0],y[0])||cmp(x[1],y[1])};
+const EYE='<svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+let S={accounts:[],pages:[]};
+
+async function refresh(){
+  S=await fetch('/api/state').then(r=>r.json());
+  const busy=S.running||S.scanning;
+  $('dot').className='dot'+(busy?' on':'');
+  $('status').textContent=S.running?'bot działa':S.scanning?'skanuję…':'bezczynny';
+  $('btnStart').hidden=S.running; $('btnStop').hidden=!S.running;
+  $('btnScan').disabled=busy; $('btnStart').disabled=busy;
+  $('chkView').checked=!S.headless;
+  if(document.activeElement!==$('numJoins')) $('numJoins').value=S.maxJoins;
+  const l=$('log'), atEnd=l.scrollTop+l.clientHeight>=l.scrollHeight-20;
+  l.textContent=S.log.join('\n'); if(atEnd) l.scrollTop=l.scrollHeight;
+  renderAccounts(); renderPages();
+}
+function renderAccounts(){
+  const W=Object.fromEntries((S.waiting||[]).map(w=>[w.id,w]));
+  const R=Object.fromEntries((S.revoked||[]).map(r=>[r.id,r]));
+  $('accounts').innerHTML=S.accounts.length?[...S.accounts].sort(byName).map(a=>`
+   <div class="item" ${W[a.id]||R[a.id]?'style="border-color:var(--warn)"':''}><input type="checkbox" ${a.active?'checked':''} data-act="${a.id}" title="Aktywne" aria-label="Aktywne">
+    <div class="main"><div class="t">${esc(a.name)}</div>
+      <div class="s ${W[a.id]||R[a.id]?'err':''}">${R[a.id]?'⚠ wylogowano: '+esc(R[a.id].reason)+' · ':''}${W[a.id]?'⏸ czeka na Ciebie: '+esc(W[a.id].label)+' · ':''}${a.has_token?'token ('+esc(a.token_mode||'bearer')+')'+(a.login_url?' – pominięty':''):'bez tokenu'}${a.login_url?' · auto-logowanie':''}</div></div>
+    ${W[a.id]?`<a class="btn" href="/karty.html?acc=${encodeURIComponent(a.id)}" title="Otwórz kartę tego konta i rozwiąż problem">Otwórz kartę</a><button class="primary" data-resume="${a.id}" title="${esc(W[a.id].label)}">▶ Wznów pracę</button>`:''}
+    <button data-edit="${a.id}">Edytuj</button><button class="danger" data-delacc="${a.id}">Usuń</button></div>`).join('')
+   :'<div class="empty">Brak kont. Bot ruszy bez logowania.</div>';
+}
+function renderPages(){
+  $('pages').innerHTML=S.pages.length?S.pages.map(p=>{
+    const sc=p.scan; let info='nieskanowana';
+    if(sc) info=sc.error?esc(sc.error):`${sc.status} · ${esc((sc.title||'').slice(0,40))} · linki: ${sc.links}, pola: ${sc.inputs}, przyciski: ${sc.buttons}`;
+    const n=(p.selectors||[]).length;
+    const scr=p.script?`<span class="badge sel" title="strony/${esc(p.script)}">skrypt</span>`:'';
+    const cfg=p.targetId?`<span class="badge sel">#${esc(p.targetId)} · ${p.action==='search'?'szukaj':'odczyt'}</span>`:'';
+    return `<div class="item">
+      <button class="icon" data-eye="${p.id}" title="Podgląd i zaznaczanie elementów" aria-label="Podgląd">${EYE}</button>
+      <div class="main"><div class="t">${esc(p.url)}</div><div class="s ${sc&&sc.error?'err':''}">${info}</div></div>
+      ${scr}${cfg}<span class="badge ${n?'sel':''}">${n} zazn.</span>
+      <button class="danger" data-delpage="${p.id}">Usuń</button></div>`}).join('')
+   :'<div class="empty">Dodaj adres strony, którą bot ma odwiedzać.</div>';
+}
+
+/* konta */
+function resetAcc(){ $('accForm').reset(); $('a_id').value=''; $('accSubmit').textContent='Dodaj konto';
+  $('accCancel').hidden=true; $('clearRow').hidden=true; $('passHint').textContent=''; $('tokHint').textContent=''; }
+$('accCancel').onclick=resetAcc;
+$('accForm').onsubmit=async e=>{e.preventDefault();
+  const old=S.accounts.find(a=>a.id===$('a_id').value);
+  await api('POST','/api/accounts',{id:$('a_id').value,name:$('a_name').value,token:$('a_token').value,
+    token_mode:$('a_tmode').value,token_name:$('a_tname').value,clear_token:$('a_clear').checked,
+    login:$('a_login').value,password:$('a_pass').value,login_url:$('a_lurl').value,
+    user_sel:$('a_usel').value,pass_sel:$('a_psel').value,submit_sel:$('a_ssel').value,active:old?old.active:true});
+  resetAcc(); refresh();};
+$('accounts').onclick=async e=>{
+  const t=e.target;
+  if(t.dataset.resume){await api('POST','/api/accounts/'+t.dataset.resume+'/resume');refresh();}
+  if(t.dataset.delacc){await api('DELETE','/api/accounts/'+t.dataset.delacc);refresh();}
+  if(t.dataset.edit){const a=S.accounts.find(x=>x.id===t.dataset.edit);
+    $('a_id').value=a.id;$('a_name').value=a.name;$('a_token').value='';
+    $('a_tmode').value=a.token_mode||'bearer';$('a_tname').value=a.token_name||'';
+    $('a_login').value=a.login||'';$('a_pass').value='';
+    $('a_lurl').value=a.login_url||'';$('a_usel').value=a.user_sel||'';$('a_psel').value=a.pass_sel||'';$('a_ssel').value=a.submit_sel||'';
+    $('tokHint').textContent=a.has_token?'(zapisany – zostaw puste, aby nie zmieniać)':'';
+    $('passHint').textContent=a.has_password?'(zostaw puste, aby nie zmieniać)':'';
+    $('clearRow').hidden=!a.has_token;
+    $('accSubmit').textContent='Zapisz zmiany';$('accCancel').hidden=false;$('a_name').focus();}
+};
+$('accounts').onchange=async e=>{ if(e.target.dataset.act){
+  await api('POST','/api/accounts',{id:e.target.dataset.act,active:e.target.checked}); refresh(); }};
+
+/* strony */
+$('pageForm').onsubmit=async e=>{e.preventDefault();await api('POST','/api/pages',{url:$('p_url').value});$('p_url').value='';refresh();};
+$('pages').onclick=async e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  if(b.dataset.delpage){await api('DELETE','/api/pages/'+b.dataset.delpage);refresh();}
+  if(b.dataset.eye) openPreview(b.dataset.eye);
+};
+$('numJoins').onchange=async e=>{await api('POST','/api/settings',{maxJoins:e.target.value});refresh();};
+$('chkView').onchange=async e=>{await api('POST','/api/settings',{headless:!e.target.checked});refresh();};
+$('btnScan').onclick=async()=>{await api('POST','/api/scan');refresh();};
+$('btnStart').onclick=async()=>{await api('POST','/api/start');refresh();};
+$('btnStop').onclick=async()=>{await api('POST','/api/stop');refresh();};
+
+/* podgląd + zaznaczanie */
+let cur=null, sel=[];
+function cssPath(el){
+  const d=el.ownerDocument, parts=[];
+  while(el&&el.nodeType===1&&el!==d.documentElement){
+    if(el.id&&/^[A-Za-z][\w-]*$/.test(el.id)&&d.querySelectorAll('#'+CSS.escape(el.id)).length===1){parts.unshift('#'+CSS.escape(el.id));break;}
+    let i=1,s=el; while((s=s.previousElementSibling)) if(s.tagName===el.tagName) i++;
+    parts.unshift(el.tagName.toLowerCase()+':nth-of-type('+i+')'); el=el.parentElement;
+  }
+  return parts.join(' > ');
+}
+function loadFrame(){
+  $('m_load').style.display='grid';
+  $('ifr').src='/preview?url='+encodeURIComponent(cur.url)+'&account='+encodeURIComponent($('m_acc').value);
+}
+function openPreview(id){
+  cur=S.pages.find(p=>p.id===id); sel=[...(cur.selectors||[])];
+  $('m_url').textContent=cur.url;
+  $('m_acc').innerHTML='<option value="">Bez konta</option>'+[...S.accounts].sort(byName).map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('');
+  const first=S.accounts.find(a=>a.active); if(first) $('m_acc').value=first.id;
+  $('m_tid').value=cur.targetId||''; $('m_action').value=cur.action||'read'; $('m_query').value=cur.query||'';
+  $('m_qrow').hidden=$('m_action').value!=='search';
+  $('modal').classList.add('open'); renderSel(); loadFrame();
+}
+$('m_acc').onchange=loadFrame;
+$('m_action').onchange=()=>{$('m_qrow').hidden=$('m_action').value!=='search';};
+function paint(){
+  const d=$('ifr').contentDocument; if(!d) return;
+  d.querySelectorAll('.__sel').forEach(el=>el.classList.remove('__sel'));
+  sel.forEach(s=>{try{d.querySelectorAll(s).forEach(el=>el.classList.add('__sel'))}catch(_){}});
+}
+function renderSel(){
+  $('m_count').textContent=sel.length;
+  $('m_list').innerHTML=sel.length?sel.map((s,i)=>`<div class="sel-item"><span>${esc(s)}</span><button data-rm="${i}" class="icon" aria-label="Usuń">✕</button></div>`).join(''):'<div class="empty">Nic nie zaznaczono.</div>';
+  paint();
+}
+$('m_list').onclick=e=>{const b=e.target.closest('[data-rm]'); if(b){sel.splice(+b.dataset.rm,1);renderSel();}};
+$('ifr').onload=()=>{
+  const d=$('ifr').contentDocument; if(!d||!cur) return;
+  $('m_load').style.display='none';
+  const st=d.createElement('style');
+  st.textContent='.__hv{outline:2px dashed #f5a623!important;outline-offset:-2px;cursor:crosshair!important}.__sel{outline:3px solid #22a35a!important;outline-offset:-3px;background-color:rgba(34,163,90,.18)!important}';
+  (d.head||d.documentElement).appendChild(st);
+  d.addEventListener('mouseover',e=>e.target.classList&&e.target.classList.add('__hv'));
+  d.addEventListener('mouseout',e=>e.target.classList&&e.target.classList.remove('__hv'));
+  d.addEventListener('click',e=>{
+    e.preventDefault(); e.stopPropagation();
+    const s=cssPath(e.target), i=sel.indexOf(s);
+    if(i>-1) sel.splice(i,1); else sel.push(s);
+    renderSel();
+  },true);
+  paint();
+};
+$('m_save').onclick=async()=>{
+  await api('POST','/api/pages/'+cur.id,{selectors:sel,targetId:$('m_tid').value,action:$('m_action').value,query:$('m_query').value});
+  closeModal(); refresh();
+};
+function closeModal(){$('modal').classList.remove('open');$('ifr').src='about:blank';cur=null;}
+$('m_close').onclick=closeModal;
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&cur) closeModal();});
+
+refresh(); setInterval(refresh,2000);
+</script>
+</body></html>
