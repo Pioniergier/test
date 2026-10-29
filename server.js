@@ -35,10 +35,10 @@ const REDIRECT_GRACE_NO_SITE_MS = 1500;     // domena bez skryptu w strony/ – 
 const PREVIEW_IDLE_MS = 60000;  // przeglądarka podglądu (/preview) zamyka się po tylu ms bezczynności
 
 const PORT = Number(process.env.PORT || process.env.SERVER_PORT) || (IS_HOSTED ? 16927 : 5000);
-const HOST = process.env.HOST || (IS_HOSTED ? '0.0.0.0' : '127.0.0.1');
+const HOST = process.env.HOST || (IS_HOSTED ? '0.0.0.0' : '0.0.0.0');
 const PANEL_USER = process.env.PANEL_USER || 'admin';
 const PASS_FILE = path.join(__dirname, 'panel-password.txt');
-const EXPOSED = !['127.0.0.1', 'localhost', '::1'].includes(HOST);   // panel dostępny z sieci
+const EXPOSED = !['0.0.0.0', 'localhost', '::1'].includes(HOST);   // panel dostępny z sieci
 // Hasło panelu: PANEL_PASSWORD, a gdy brak – plik panel-password.txt. Gdy panel jest dostępny z sieci, a hasła nie ma,
 // generujemy je (panel steruje zalogowaną przeglądarką, więc nie może stać w internecie bez hasła).
 let PANEL_PASSWORD = process.env.PANEL_PASSWORD || '';
