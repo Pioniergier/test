@@ -1,0 +1,10 @@
+   {
+     "name": "panel-test",
+     "private": true,
+     "main": "server.js",
+     "scripts": { "start": "node server.js" },
+     "dependencies": {
+       "express": "^4.19.2",
+       "puppeteer-real-browser": "^1.4.2"
+     }
+   }
